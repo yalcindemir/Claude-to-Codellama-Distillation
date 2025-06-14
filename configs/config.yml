@@ -1,0 +1,316 @@
+# Claude to CodeLlama Knowledge Distillation Configuration
+
+# Claude API Configuration
+claude:
+  api_key: "${ANTHROPIC_API_KEY}"  # Set via environment variable
+  model: "claude-3-opus-20240229"  # Will be updated to claude-4-opus when available
+  max_tokens: 4096
+  temperature: 0.1
+  top_p: 0.95
+  timeout: 60.0
+  max_retries: 3
+  retry_delay: 1.0
+  rate_limit_rpm: 50  # Requests per minute
+  rate_limit_tpm: 40000  # Tokens per minute
+
+# Dataset Generation Configuration
+dataset:
+  target_size: 25000  # Total number of examples to generate
+  languages:
+    - python
+    - javascript
+    - java
+    - cpp
+    - go
+    - rust
+  
+  # Distribution across languages (percentages)
+  language_distribution:
+    python: 40
+    javascript: 25
+    java: 15
+    cpp: 10
+    go: 5
+    rust: 5
+  
+  # Difficulty distribution
+  difficulty_distribution:
+    easy: 30
+    medium: 50
+    hard: 20
+  
+  # Style distribution
+  style_distribution:
+    clean: 50
+    documented: 30
+    optimized: 20
+  
+  # Output paths
+  output_dir: "./data/generated"
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+# Instruction Templates
+instruction_templates:
+  python:
+    easy:
+      - "Write a Python function to {task}"
+      - "Create a simple Python script that {task}"
+      - "Implement a basic {concept} in Python"
+    medium:
+      - "Develop a Python class that {task}"
+      - "Write a Python function to solve {problem}"
+      - "Implement {algorithm} algorithm in Python"
+    hard:
+      - "Create an advanced Python implementation of {concept}"
+      - "Optimize the following Python code for {task}"
+      - "Design a Python system that {task}"
+  
+  javascript:
+    easy:
+      - "Write a JavaScript function to {task}"
+      - "Create a simple JS script that {task}"
+      - "Implement basic {concept} in JavaScript"
+    medium:
+      - "Develop a JavaScript class for {task}"
+      - "Write an async JavaScript function to {task}"
+      - "Implement {algorithm} in JavaScript"
+    hard:
+      - "Create a complex JavaScript application that {task}"
+      - "Optimize JavaScript code for {task}"
+      - "Design a JavaScript framework for {task}"
+  
+  java:
+    easy:
+      - "Write a Java method to {task}"
+      - "Create a simple Java class that {task}"
+      - "Implement basic {concept} in Java"
+    medium:
+      - "Develop a Java class with {features}"
+      - "Write a Java program to solve {problem}"
+      - "Implement {algorithm} algorithm in Java"
+    hard:
+      - "Create a Java application that {task}"
+      - "Design a Java framework for {task}"
+      - "Optimize Java code for {task}"
+
+# Task Categories
+task_categories:
+  data_structures:
+    - "implement a linked list"
+    - "create a binary tree"
+    - "build a hash table"
+    - "implement a stack"
+    - "create a queue"
+  
+  algorithms:
+    - "binary search"
+    - "merge sort"
+    - "quick sort"
+    - "depth-first search"
+    - "breadth-first search"
+    - "dynamic programming solution"
+  
+  web_development:
+    - "create a REST API"
+    - "build a web scraper"
+    - "implement authentication"
+    - "create a database connection"
+    - "build a web server"
+  
+  utilities:
+    - "parse JSON data"
+    - "validate email addresses"
+    - "generate random passwords"
+    - "calculate file checksums"
+    - "format dates and times"
+  
+  mathematical:
+    - "calculate prime numbers"
+    - "solve linear equations"
+    - "compute statistical measures"
+    - "perform matrix operations"
+    - "calculate geometric shapes"
+
+# Student Model Configuration (Code Llama)
+student_model:
+  base_model: "codellama/CodeLlama-7b-hf"
+  model_variants:
+    - "codellama/CodeLlama-7b-hf"
+    - "codellama/CodeLlama-13b-hf"
+    - "codellama/CodeLlama-7b-Instruct-hf"
+  
+  # LoRA Configuration
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.1
+    target_modules:
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+  
+  # Quantization
+  quantization:
+    load_in_4bit: true
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_use_double_quant: true
+
+# Knowledge Distillation Configuration
+distillation:
+  # Loss weights
+  distillation_weight: 0.7
+  task_weight: 0.3
+  
+  # Temperature for softmax
+  temperature: 4.0
+  
+  # Training parameters
+  num_epochs: 3
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2e-4
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  
+  # Optimization
+  optimizer: "paged_adamw_8bit"
+  lr_scheduler_type: "cosine"
+  use_gradient_checkpointing: true
+  use_mixed_precision: true
+
+# Training Environment Configuration
+environment:
+  # Google Colab settings
+  colab:
+    mount_drive: true
+    drive_path: "/content/drive/MyDrive/claude_distillation"
+    auto_install_deps: true
+    gpu_memory_fraction: 0.9
+  
+  # Google Cloud Platform settings
+  gcp:
+    project_id: "your-gcp-project-id"
+    bucket_name: "claude-distillation-bucket"
+    instance_name: "claude-distillation-training"
+    zone: "us-central1-a"
+    machine_type: "n1-standard-8"
+    gpu_type: "nvidia-tesla-t4"
+    gpu_count: 1
+    preemptible: true
+
+# Evaluation Configuration
+evaluation:
+  benchmarks:
+    - "humaneval"
+    - "mbpp"
+    - "apps"
+  
+  metrics:
+    - "pass_at_1"
+    - "pass_at_10"
+    - "bleu_score"
+    - "rouge_score"
+    - "code_quality"
+    - "functional_correctness"
+  
+  # Comparison with teacher
+  teacher_comparison:
+    enabled: true
+    sample_size: 1000
+    temperature: 0.1
+
+# Monitoring and Logging
+monitoring:
+  use_wandb: true
+  wandb_project: "claude-to-codellama-distillation"
+  wandb_entity: null  # Your W&B username
+  
+  log_level: "INFO"
+  save_steps: 100
+  eval_steps: 100
+  logging_steps: 10
+  
+  # Metrics to track
+  metrics:
+    - "loss"
+    - "distillation_loss"
+    - "task_loss"
+    - "learning_rate"
+    - "grad_norm"
+    - "tokens_per_second"
+
+# Cost Optimization
+cost_optimization:
+  # Prompt caching for Claude API
+  use_prompt_caching: true
+  cache_hit_rate_target: 0.8
+  
+  # Batch processing
+  batch_size_api: 10
+  max_concurrent_requests: 5
+  
+  # Training optimization
+  use_preemptible_instances: true
+  auto_shutdown_idle_time: 3600  # 1 hour
+  
+  # Budget alerts
+  budget_limit: 500  # USD
+  alert_threshold: 0.8  # 80% of budget
+
+# Data Quality Control
+quality_control:
+  # Code validation
+  syntax_check: true
+  execution_test: true
+  
+  # Filtering criteria
+  min_code_length: 50
+  max_code_length: 2048
+  min_instruction_length: 10
+  max_instruction_length: 500
+  
+  # Quality thresholds
+  min_quality_score: 0.7
+  duplicate_threshold: 0.9
+  
+  # Manual review
+  manual_review_sample_rate: 0.05  # 5% of examples
+
+# Output Configuration
+output:
+  # Dataset formats
+  formats:
+    - "jsonl"
+    - "parquet"
+    - "huggingface"
+  
+  # Model outputs
+  save_checkpoints: true
+  save_final_model: true
+  push_to_hub: false  # Set to true to push to HuggingFace Hub
+  
+  # Documentation
+  generate_report: true
+  include_visualizations: true
+  
+# Security and Privacy
+security:
+  # API key management
+  use_environment_variables: true
+  encrypt_stored_data: false
+  
+  # Data privacy
+  anonymize_data: false
+  remove_sensitive_info: true
+  
+  # Access control
+  restrict_api_access: false
+

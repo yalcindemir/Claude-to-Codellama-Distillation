@@ -22,48 +22,48 @@ Bu proje, **Claude Opus 4**'ün (öğretmen) gelişmiş kod üretim yeteneklerin
 - 📊 **Kapsamlı Değerlendirme**: HumanEval, MBPP, APPS kıyaslamaları
 - 🔧 **Üretim Hazır**: İzleme ile uçtan uca işlem hattı
 
-## 🚀 Quick Start
+## 🚀 Hızlı Başlangıç
 
-### Option 1: Google Colab (Recommended)
+### Seçenek 1: Google Colab (Önerilen)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yeditepe/claude-to-codellama-distillation/blob/main/notebooks/Claude_Code_Model_Colab.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yalcindemir/claude-to-codellama-distillation/blob/main/notebooks/Claude_Code_Model_Colab.ipynb)
 
 ```python
-# 1. Open the Colab notebook
-# 2. Set your Claude API key
+# 1. Colab notebook'unu açın
+# 2. Claude API anahtarınızı ayarlayın
 import os
-os.environ['ANTHROPIC_API_KEY'] = 'your-api-key-here'
+os.environ['ANTHROPIC_API_KEY'] = 'api-anahtariniz-buraya'
 
-# 3. Run all cells - automatic setup and training!
+# 3. Tüm hücreleri çalıştırın - otomatik kurulum ve eğitim!
 ```
 
-### Option 2: Local Setup
+### Seçenek 2: Yerel Kurulum
 
 ```bash
-# Clone repository
-git clone https://github.com/yeditepe/claude-to-codellama-distillation.git
+# Repository'yi klonlayın
+git clone https://github.com/yalcindemir/claude-to-codellama-distillation.git
 cd claude-to-codellama-distillation
 
-# Setup environment
+# Ortamı kurun
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows'ta: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Configure API key
-export ANTHROPIC_API_KEY='your-api-key-here'
+# API anahtarını yapılandırın
+export ANTHROPIC_API_KEY='api-anahtariniz-buraya'
 
-# Run full pipeline
+# Tam pipeline'ı çalıştırın
 chmod +x scripts/run_full_pipeline.sh
 ./scripts/run_full_pipeline.sh
 ```
 
-### Option 3: Google Cloud Platform
+### Seçenek 3: Google Cloud Platform
 
 ```bash
-# Deploy with one command
+# Tek komutla dağıtın
 ./scripts/deploy_gcp.sh deploy
 
-# Monitor training
+# Eğitimi izleyin
 ./scripts/deploy_gcp.sh monitor
 ```
 
@@ -151,6 +151,7 @@ Total:                         ~$260
 ```
 claude_to_codellama_distillation/
 ├── 📂 src/                          # Core source code
+│   ├── __init__.py                  # Package initialization
 │   ├── claude_client.py             # Claude API integration
 │   ├── dataset_generator.py         # Dataset generation pipeline
 │   ├── distillation_trainer.py      # Training system
@@ -159,7 +160,7 @@ claude_to_codellama_distillation/
 ├── 📂 configs/                      # Configuration files
 │   ├── config.yml                   # Main configuration
 │   ├── training_config.yml          # Training parameters
-│   └── gcp_config.yml              # Cloud deployment
+│   └── gcp_config.yml              # Cloud deployment settings
 ├── 📂 scripts/                      # Deployment scripts
 │   ├── run_full_pipeline.sh         # Complete pipeline
 │   ├── deploy_gcp.sh               # GCP deployment
@@ -167,9 +168,22 @@ claude_to_codellama_distillation/
 ├── 📂 notebooks/                    # Jupyter notebooks
 │   └── Claude_Code_Model_Colab.ipynb # Colab notebook
 ├── 📂 docs/                         # Documentation
-│   └── technical_documentation.md   # Comprehensive docs
-└── 📂 tests/                        # Test suite
-    └── test_distillation.py         # Unit tests
+│   ├── technical_documentation.md   # Comprehensive docs
+│   ├── api_reference.md            # API documentation
+│   └── deployment_guide.md         # Deployment guide
+├── 📂 tests/                        # Test suite
+│   ├── __init__.py                  # Test package init
+│   ├── test_claude_client.py        # Claude client tests
+│   ├── test_dataset_generator.py    # Dataset generator tests
+│   └── test_distillation.py         # Training system tests
+├── 📂 data/                         # Data directory
+├── 📂 models/                       # Model storage
+├── 📂 logs/                         # Log files
+├── requirements.txt                 # Python dependencies
+├── setup.py                        # Package setup
+├── .gitignore                      # Git ignore rules
+├── CLAUDE.md                       # Claude instructions
+└── README.md                       # Project documentation
 ```
 
 ## 🎯 Usage Examples
@@ -437,18 +451,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yeditepe/claude-to-codellama-distillation/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yeditepe/claude-to-codellama-distillation/discussions)
-- 📧 **Email**: support@yeditepe.idias.com
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yalcindemir/claude-to-codellama-distillation/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/yalcindemir/claude-to-codellama-distillation/discussions)
+- 📧 **Email**: support@idias.com
 - 📖 **Documentation**: [Technical Docs](docs/technical_documentation.md)
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yeditepe/claude-to-codellama-distillation&type=Date)](https://star-history.com/#yeditepe/claude-to-codellama-distillation&Date)
-
+[![Star History Chart](https://api.star-history.com/svg?repos=yalcindemir/claude-to-codellama-distillation&type=Date)](https://www.star-history.com/#yalcindemir/claude-to-codellama-distillation&Date)
 ---
 
-**Made with ❤️ by the Manus AI Team**
+**❤️ ile Yalçın DEMIR tarafından geliştirildi**
 
-*Democratizing AI, one model at a time.*
+*AI'yi demokratikleştirmek, birer model ile.*
 
