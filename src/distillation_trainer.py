@@ -31,7 +31,7 @@ from peft import (
     LoraConfig, get_peft_model, TaskType, 
     prepare_model_for_kbit_training, PeftModel
 )
-from datasets import Dataset as HFDataset, load_from_disk
+from datasets import Dataset as HFDataset, load_from_disk, DatasetDict
 import wandb
 from tqdm import tqdm
 import numpy as np
@@ -362,12 +362,44 @@ class KnowledgeDistillationSystem:
         
         logger.info("Model ve tokenizer kurulumu tamamlandı")
     
+    def _load_jsonl_dataset(self, dataset_path: str) -> DatasetDict:
+        """JSONL dosyalarından veri seti yükler."""
+        dataset_dict = {}
+        
+        # Her split için JSONL dosyalarını yükle
+        splits = ["train", "validation", "test"]
+        for split in splits:
+            jsonl_path = Path(dataset_path) / f"{split}.jsonl"
+            if jsonl_path.exists():
+                logger.info(f"{split} split yükleniyor: {jsonl_path}")
+                data = []
+                with open(jsonl_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if line.strip():
+                            data.append(json.loads(line))
+                
+                if data:
+                    dataset_dict[split] = HFDataset.from_list(data)
+                    logger.info(f"{len(data)} örnek yüklendi ({split})")
+                else:
+                    logger.warning(f"{split} split boş")
+            else:
+                logger.warning(f"{split} split dosyası bulunamadı: {jsonl_path}")
+        
+        return DatasetDict(dataset_dict)
+
     def load_dataset(self) -> Tuple[CodeDataset, CodeDataset]:
         """Veri setlerini yükler ve hazırlar."""
         logger.info(f"{self.config.dataset_path} konumundan veri seti yükleniyor")
         
-        # Load dataset
-        dataset_dict = load_from_disk(self.config.dataset_path)
+        # Önce HuggingFace dataset dizini olup olmadığını kontrol et
+        hf_dataset_path = Path(self.config.dataset_path)
+        if (hf_dataset_path / "dataset_info.json").exists():
+            # HuggingFace dataset formatı
+            dataset_dict = load_from_disk(self.config.dataset_path)
+        else:
+            # JSONL dosyalarından yükle
+            dataset_dict = self._load_jsonl_dataset(self.config.dataset_path)
         
         # Create datasets
         train_dataset = CodeDataset(

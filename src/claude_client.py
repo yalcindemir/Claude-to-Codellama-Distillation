@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class ClaudeConfig:
     """Claude API istemcisi için yapılandırma."""
     api_key: str
-    model: str = "claude-3-opus-20240229"  # claude-4-opus mevcut olduğunda güncellenecek
+    model: str = "claude-opus-4-20250514"  # claude-4-opus mevcut olduğunda güncellenecek
     max_tokens: int = 4096
     temperature: float = 0.1
     top_p: float = 0.95

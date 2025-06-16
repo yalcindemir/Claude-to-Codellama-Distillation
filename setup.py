@@ -13,16 +13,39 @@ def read_readme():
             return f.read()
     return ''
 
-# Read requirements
+# Read requirements with error handling
 def read_requirements():
     req_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
     requirements = []
-    if os.path.exists(req_path):
-        with open(req_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    requirements.append(line)
+    try:
+        if os.path.exists(req_path):
+            with open(req_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip comments and empty lines
+                    if line and not line.startswith('#'):
+                        # Remove version specifiers that might cause issues
+                        if '>=' in line:
+                            package_name = line.split('>=')[0].strip()
+                        elif '==' in line:
+                            package_name = line.split('==')[0].strip()
+                        else:
+                            package_name = line.strip()
+                        
+                        # Skip problematic packages for setup
+                        if package_name not in ['google-cloud-storage', 'google-cloud-logging']:
+                            requirements.append(package_name)
+    except Exception as e:
+        print(f"Warning: Could not read requirements.txt: {e}")
+        # Fallback to minimal requirements
+        requirements = [
+            'anthropic',
+            'torch',
+            'transformers',
+            'datasets',
+            'pyyaml',
+            'tqdm'
+        ]
     return requirements
 
 setup(
@@ -68,11 +91,11 @@ setup(
             "google-colab",
         ],
     },
-    entry_points={
-        "console_scripts": [
-            "claude-distill=src.cli:main",
-        ],
-    },
+    # entry_points={
+    #     "console_scripts": [
+    #         "claude-distill=src.cli:main",
+    #     ],
+    # },
     keywords=[
         "knowledge distillation",
         "code generation", 
