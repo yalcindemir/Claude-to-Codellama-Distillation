@@ -301,6 +301,27 @@ class KnowledgeDistillationSystem:
         logger.info(f"Cihaz: {self.device}")
         logger.info(f"Öğrenci model: {config.student_model_name}")
     
+    def _get_target_modules(self, model_name: str) -> List[str]:
+        """Model tipine göre uygun LoRA target modüllerini döndürür."""
+        model_name_lower = model_name.lower()
+        
+        if "codellama" in model_name_lower or "llama" in model_name_lower:
+            # Llama-based models
+            return ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+        elif "dialogpt" in model_name_lower or "gpt" in model_name_lower:
+            # GPT-based models  
+            return ["c_attn", "c_proj", "c_fc"]
+        elif "bert" in model_name_lower:
+            # BERT-based models
+            return ["query", "key", "value", "dense"]
+        elif "t5" in model_name_lower:
+            # T5-based models
+            return ["q", "k", "v", "o", "wi_0", "wi_1", "wo"]
+        else:
+            # Default: try common patterns
+            logger.warning(f"Unknown model type for {model_name}, using default target modules")
+            return ["q_proj", "v_proj", "k_proj", "o_proj"]
+
     def setup_model_and_tokenizer(self):
         """Öğrenci model ve tokenizer'ı kurar."""
         logger.info("Tokenizer ve model yükleniyor...")
@@ -337,28 +358,76 @@ class KnowledgeDistillationSystem:
             torch_dtype=torch.float16 if self.config.use_mixed_precision else torch.float32
         )
         
+        # Model tipine göre target modülleri belirle
+        target_modules = self._get_target_modules(self.config.student_model_name)
+        logger.info(f"Model {self.config.student_model_name} için target modüller: {target_modules}")
+        
         # Modeli eğitime hazırla
         if self.config.use_4bit:
             self.model = prepare_model_for_kbit_training(self.model)
         
         # LoRA'yı kur
-        lora_config = LoraConfig(
-            r=self.config.lora_r,
-            lora_alpha=self.config.lora_alpha,
-            target_modules=self.config.lora_target_modules,
-            lora_dropout=self.config.lora_dropout,
-            bias="none",
-            task_type=TaskType.CAUSAL_LM,
-        )
-        
-        self.model = get_peft_model(self.model, lora_config)
+        try:
+            lora_config = LoraConfig(
+                r=self.config.lora_r,
+                lora_alpha=self.config.lora_alpha,
+                target_modules=target_modules,
+                lora_dropout=self.config.lora_dropout,
+                bias="none",
+                task_type=TaskType.CAUSAL_LM,
+            )
+            
+            self.model = get_peft_model(self.model, lora_config)
+            logger.info("LoRA başarıyla uygulandı")
+            
+        except Exception as e:
+            logger.warning(f"LoRA uygulanırken hata: {e}")
+            logger.info("Model layer isimlerini kontrol ediyoruz...")
+            
+            # Model layer isimlerini kontrol et
+            available_modules = []
+            for name, module in self.model.named_modules():
+                if hasattr(module, 'weight') and len(module.weight.shape) >= 2:
+                    available_modules.append(name)
+            
+            logger.info(f"Mevcut linear layer'lar: {available_modules[:10]}...")  # İlk 10'unu göster
+            
+            # Basit fallback: sadece attention layer'ları
+            fallback_targets = [name for name in available_modules if any(
+                pattern in name.lower() for pattern in ['attn', 'attention', 'query', 'key', 'value', 'proj']
+            )][:4]  # En fazla 4 tane
+            
+            if fallback_targets:
+                logger.info(f"Fallback target modüller kullanılıyor: {fallback_targets}")
+                lora_config = LoraConfig(
+                    r=self.config.lora_r,
+                    lora_alpha=self.config.lora_alpha,
+                    target_modules=fallback_targets,
+                    lora_dropout=self.config.lora_dropout,
+                    bias="none",
+                    task_type=TaskType.CAUSAL_LM,
+                )
+                self.model = get_peft_model(self.model, lora_config)
+                logger.info("Fallback LoRA başarıyla uygulandı")
+            else:
+                logger.warning("LoRA uygulanamadı, tam model eğitimi kullanılacak")
         
         # Gradyan kontrol noktalarını etkinleştir
         if self.config.use_gradient_checkpointing:
-            self.model.gradient_checkpointing_enable()
+            try:
+                self.model.gradient_checkpointing_enable()
+            except Exception as e:
+                logger.warning(f"Gradient checkpointing etkinleştirilemedi: {e}")
         
         # Eğitilebilir parametreleri yazdır
-        self.model.print_trainable_parameters()
+        if hasattr(self.model, 'print_trainable_parameters'):
+            self.model.print_trainable_parameters()
+        else:
+            total_params = sum(p.numel() for p in self.model.parameters())
+            trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            logger.info(f"Toplam parametreler: {total_params:,}")
+            logger.info(f"Eğitilebilir parametreler: {trainable_params:,}")
+            logger.info(f"Eğitilebilir oran: %{100 * trainable_params / total_params:.2f}")
         
         logger.info("Model ve tokenizer kurulumu tamamlandı")
     
